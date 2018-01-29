@@ -9,7 +9,7 @@
 using namespace tensorflow;
 
 
-#define KEPLER_MAX_ITER 200
+#define KEPLER_MAX_ITER 2000
 #define KEPLER_TOL      1.234e-10
 
 // Kepler solver
