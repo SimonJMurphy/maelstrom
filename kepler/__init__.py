@@ -18,5 +18,13 @@ kepler = mod.kepler
 
 @tf.RegisterGradient("Kepler")
 def _kepler_grad(op, *grads):
-    args = list(op.inputs) + list(op.outputs) + list(grads)
-    return mod.kepler_grad(*args)
+    M, e = op.inputs
+    E = op.outputs[0]
+    bE = grads[0]
+    bM = bE / (1.0 - e * tf.cos(E))
+    be = tf.reduce_sum(tf.sin(E) * bM)
+
+    return [bM, be]
+
+    # args = list(op.inputs) + list(op.outputs) + list(grads)
+    # return mod.kepler_grad(*args)
