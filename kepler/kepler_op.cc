@@ -40,8 +40,7 @@ REGISTER_OP("Kepler")
   .Input("eccen: T")
   .Output("eanom: T")
   .SetShapeFn([](shape_inference::InferenceContext* c) {
-    shape_inference::ShapeHandle M, e;
-    TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 1, &M));
+    shape_inference::ShapeHandle e;
     TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 0, &e));
     c->set_output(0, c->input(0));
     return Status::OK();
@@ -66,11 +65,11 @@ class KeplerOp : public OpKernel {
 
     // Access the data
     const auto M = M_tensor.template flat<T>();
-    const auto e = e_tensor.template flat<T>();
+    const auto e = e_tensor.template scalar<T>()(0);
     auto E = E_tensor->template flat<T>();
 
     for (int64 n = 0; n < N; ++n) {
-      E(n) = kepler<T>(M(n), e(0));
+      E(n) = kepler<T>(M(n), e);
     }
   }
 };
@@ -78,7 +77,7 @@ class KeplerOp : public OpKernel {
 
 #define REGISTER_KERNEL(type)                                              \
   REGISTER_KERNEL_BUILDER(                                                 \
-      Name("Kepler").Device(DEVICE_CPU).TypeConstraint<type>("T"), \
+      Name("Kepler").Device(DEVICE_CPU).TypeConstraint<type>("T"),         \
       KeplerOp<type>)
 
 REGISTER_KERNEL(float);
