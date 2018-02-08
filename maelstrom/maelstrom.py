@@ -24,11 +24,10 @@ class Maelstrom(object):
     """
     T = tf.float64
 
-    def __init__(self, time, mag, nu, log_sigma2=None, with_eccen=True):
+    def __init__(self, time, mag, nu, log_sigma2=None, **kwargs):
         self.time_data = np.atleast_1d(time)
         self.mag_data = np.atleast_1d(mag)
         self.nu_data = np.atleast_1d(nu)
-        self.with_eccen = with_eccen
 
         self.time = tf.constant(self.time_data, dtype=self.T)
         self.mag = tf.constant(self.mag_data, dtype=self.T)
@@ -41,6 +40,31 @@ class Maelstrom(object):
         self.log_sigma2 = tf.Variable(log_sigma2, dtype=self.T,
                                       name="log_sigma2")
         self.nu = tf.Variable(self.nu_data, dtype=self.T, name="nu")
+
+        self.setup_orbit_model(**kwargs)
+
+        arg = 2.0*np.pi*self.nu[None, :] * (self.time[:, None] - self.tau)
+        D = tf.concat([tf.cos(arg), tf.sin(arg),
+                       tf.ones((len(self.time_data), 1), dtype=self.T)],
+                      axis=1)
+
+        # Solve for the amplitudes and phases of the oscillations
+        DTD = tf.matmul(D, D, transpose_a=True)
+        DTy = tf.matmul(D, self.mag[:, None], transpose_a=True)
+        W_hat = tf.linalg.solve(DTD, DTy)
+
+        # Finally, the model and the chi^2 objective:
+        self.model = tf.squeeze(tf.matmul(D, W_hat))
+        self.chi2 = tf.reduce_sum(tf.square(self.mag - self.model))
+        self.chi2 *= tf.exp(-self.log_sigma2)
+        self.chi2 += len(self.time_data) * self.log_sigma2
+
+        # Initialize all the variables
+        self.run(tf.global_variables_initializer())
+
+    def setup_orbit_model(self, with_eccen=True):
+        self.with_eccen = with_eccen
+
         self.period = tf.Variable(1.0, dtype=self.T, name="period")
         self.lighttime = tf.Variable(np.zeros_like(self.nu_data), dtype=self.T,
                                      name="lighttime")
@@ -78,24 +102,6 @@ class Maelstrom(object):
         self._lighttime_per_mode = tf.gather(self.lighttime,
                                              self.lighttime_inds)
         self.tau = self._lighttime_per_mode[None, :] * self.psi[:, None]
-        arg = 2.0*np.pi*self.nu[None, :] * (self.time[:, None] - self.tau)
-        D = tf.concat([tf.cos(arg), tf.sin(arg),
-                       tf.ones((len(self.time_data), 1), dtype=self.T)],
-                      axis=1)
-
-        # Solve for the amplitudes and phases of the oscillations
-        DTD = tf.matmul(D, D, transpose_a=True)
-        DTy = tf.matmul(D, self.mag[:, None], transpose_a=True)
-        W_hat = tf.linalg.solve(DTD, DTy)
-
-        # Finally, the model and the chi^2 objective:
-        self.model = tf.squeeze(tf.matmul(D, W_hat))
-        self.chi2 = tf.reduce_sum(tf.square(self.mag - self.model))
-        self.chi2 *= tf.exp(-self.log_sigma2)
-        self.chi2 += len(self.time_data) * self.log_sigma2
-
-        # Initialize all the variables
-        self.run(tf.global_variables_initializer())
 
     def run(self, *args, **kwargs):
         return self.get_session().run(*args, **kwargs)
@@ -178,7 +184,8 @@ class Maelstrom(object):
         self.run([
             tf.assign(self.lighttime_inds, inds),
             tf.assign(self.lighttime[:len(lt)], lt),
-            tf.assign(self.lighttime[len(lt):], np.zeros(len(lt_ivar) - len(lt))),
+            tf.assign(self.lighttime[len(lt):],
+                      np.zeros(len(lt_ivar)-len(lt))),
         ])
 
         return inds, lt
