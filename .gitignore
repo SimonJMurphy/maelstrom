@@ -3,3 +3,9 @@ build
 *.so
 __pycache__
 .ipynb_checkpoints
+latex/StellarClocks.aux
+latex/StellarClocks.bbl
+latex/StellarClocks.blg
+latex/StellarClocks.log
+latex/StellarClocks.out
+latex/StellarClocks.synctex.gz
