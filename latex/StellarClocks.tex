@@ -1,0 +1,231 @@
+\voffset -10mm
+\documentclass[a4paper,fleqn,usenatbib]{mnras}
+\usepackage{newtxtext,newtxmath}
+% Depending on your LaTeX fonts installation, you might get better results with one of these:
+%\usepackage{mathptmx}
+%\usepackage{txfonts}
+\usepackage[T1]{fontenc}
+\usepackage{ae,aecompl}
+\usepackage{graphicx}	% Including figure files
+\usepackage{amsmath}	% Advanced maths commands
+\usepackage{amssymb}	% Extra maths symbols
+\usepackage{booktabs}	% Pretty tables for all!
+\usepackage{url}
+\newcommand{\blu}{\textcolor{blue} }
+\newcommand{\red}{\textcolor{red} }
+\newcommand{\specline}[3]{{#1}\,{\sc #2}\:{#3}}
+
+
+\title[Maelstrom]{Stellar Clocks -- Introducing Maelstrom}
+
+\author[DFM and SJM]{
+Daniel Foreman-Mackey,$^{1}$\thanks{E-mail: foreman.mackey@gmail.com (DFM)}
+Simon J. Murphy,$^{2\thanks{E-mail: simon.murphy@sydney.edu.au (SJM)}}$
+David W. Hogg,$^{3\thanks{E-mail: david.hogg@nyu.edu (DWH)}}$
+\\
+% List of institutions
+$^{1}$ Flatiron Institute, NYC, USA.\\
+$^{2}$ Sydney Institute for Astronomy (SIfA), School of Physics, University of Sydney, NSW 2006, Australia\\
+$^{1}$ NYU, NYC, USA.\\
+}
+
+% These dates will be filled out by the publisher
+\date{Accepted XXX. Received YYY; in original form ZZZ}
+% Enter the current year, for the copyright statements etc.
+\pubyear{2015}
+% Don't change these lines
+\begin{document}
+\label{firstpage}
+\pagerange{\pageref{firstpage}--\pageref{lastpage}}
+\maketitle
+
+
+\begin{abstract}
+Just some notes.
+\end{abstract}
+
+
+%\begin{keywords}
+%keyword1 -- keyword2 -- keyword3
+%\end{keywords}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%% BODY OF PAPER %%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+Pulsating stars with coherent modes can be used as clocks. In a binary system, the pulsating star's orbit around the barycentre leads to a change in path length for starlight travelling to Earth. The time-dependent luminosity variations due to pulsation therefore include a time-delay term, $\tau$:
+\begin{eqnarray}
+y(t) = \sum_{j=1}^J \left[ A_j \cos (\omega_j[t-\tau]) + B_j \sin(\omega_j[t-\tau]) \right] + \epsilon
+\label{eq:luminosity}
+\end{eqnarray}
+where $A_j$ is the amplitude and $\omega_j = 2\uppi\nu_j$ is the angular frequency of mode $j$, and $\epsilon$ describes variance unaccounted for by our pulsation model of $J$ modes. We assume that $\epsilon$ is Gaussian distributed with variance $\sigma^2$ (encapsulating both measurement uncertainty and model mis-specification). Note that $\tau$ is defined to be positive when the star is on the far side of the barycentre. Following \citet{murphyetal2016b}, the time delay can be expressed as a function of the true anomaly, $f$,
+\begin{eqnarray}
+\tau = - \frac{a_1 \sin i}{\rm c} \frac{1-e^2}{1+e \cos f} \sin(f+\varpi)
+\label{eq:delay}
+\end{eqnarray}
+in units of seconds, corresponding to a change in path length measured in light-seconds. We follow the previous convention that $a_1 \sin i$ denotes the projected semimajor axis, $e$ is the eccentricity, $\varpi$ is the angle between the node and the periastron, and c is the speed of light.
+
+In previous papers in this series \citep{murphyetal2014, murphy&shibahashi2015, murphyetal2016b}, time-delay curves were extracted for pulsating binaries (PBs) by segmenting the \textit{Kepler} light curve. The measured time delays were the average over the corresponding segments, which for highly eccentric binaries led to undersampling near periastron. Although a correction for undersampling was formulated (\citealt{murphyetal2016b}), it leads to decreased discriminatory power between orbits at high eccentricity \citep{murphyetal2018}. Here, we describe an approach that forward-models the time delays directly on the light curve, mitigating the sampling problem. It has the added benefit that computationally expensive series expansions in Bessel functions are no longer required.
+
+\section{New Approach}
+
+A major strength of the existing method is the independent calculation of $\tau_{i,j}$ for each $j$-th oscillation mode in each $i$-th segment. This allows the response of each pulsation mode to the orbit to be visualised and checked for mutual agreement (e.g. figures 1--5 of \citealt{murphyetal2014}). A weighted-average time delay is calculated across all $j$ modes in each segment $i$, with the relative mode amplitudes $A_j$ and $B_j$ acting as weights (stronger modes are weighted more heavily). In our formulation here, the mode amplitudes will also act as weights since the contribution of each $j$-th mode to the luminosity variations is scaled by the amplitude $A_j$ of that mode (Eq.\,\ref{eq:luminosity}), except that $\tau_j$ is now calculated at each individual observation $t$.
+
+We begin by separating the time-delay equation (Eq.\,\ref{eq:delay}) into a shape and an amplitude component
+\begin{eqnarray}
+\tau_{t, j} = \mathcal{A}_j \psi_t,
+\label{eq:shape}
+\end{eqnarray}
+where
+\begin{eqnarray}
+\psi_t = -\frac{1-e^2}{1+e \cos f} \sin(f+\varpi)
+\label{eq:psi}
+\end{eqnarray}
+and $\mathcal{A}_j$ is evaluated for each $j$-th mode. Modes can be grouped together by their $\mathcal{A}_j$, which is particularly useful when there are two pulsators in the same binary system (e.g. figure 6 of \citealt{murphyetal2014}).
+
+We construct the design matrix, $D_j$, for each $j$-th mode and each observation time $t_n$, and we combine these into the master design matrix $D$, which has $N$ rows and $2J$ columns:
+
+\begin{eqnarray}
+D_j = \left( \begin{array}{cc}
+	\cos (\omega_j[t_1 - \tau_{1,j}])& \sin (\omega_j[t_1 - \tau_{1,j}]) \\
+	\cos (\omega_j[t_2 - \tau_{2,j}])& \sin (\omega_j[t_2 - \tau_{2,j}]) \\
+	\vdots & \vdots\\
+	\cos (\omega_j[t_n - \tau_{n,j}])& \sin (\omega_j[t_n - \tau_{n,j}]) \\
+	\vdots & \vdots \\
+	\cos (\omega_j[t_N - \tau_{N,j}])& \sin (\omega_j[t_N - \tau_{N,j}])
+	\end{array}\right)
+\label{eq:Dj}
+\end{eqnarray}
+and
+\begin{eqnarray}
+D = (D_1~D_2~\dots~D_j~\dots~D_J).
+\label{eq:D}
+\end{eqnarray}
+
+The amplitude coefficients $A_j$ and $B_j$ are collected in the column matrices $w_j$
+\begin{eqnarray}
+w_j = \left( \begin{array}{c}
+	A_j \\
+	B_j
+	\end{array} \right),
+\label{eq:DW}
+\end{eqnarray}
+which are combined into the matrix of weights, $w$
+\begin{eqnarray}
+w = \left( \begin{array}{c}
+	w_1 \\
+	w_2 \\
+	\vdots \\
+	w_j \\
+	\vdots \\
+	w_J \\
+	\end{array} \right).
+\label{eq:w}
+\end{eqnarray}
+The variance in the light curve, $y$ (Eq.\,\ref{eq:luminosity}), is then expressed as
+\begin{eqnarray}
+y = D \cdot w
+\label{eq:DW}
+\end{eqnarray}
+and the maximum likelihood values for the weights can be found by linear regression
+\begin{eqnarray}
+\hat w = (D^T \cdot D)^{-1}(D^T \cdot y_n)
+\label{eq:What}
+\end{eqnarray}
+where $D^T$ is the transpose of $D$ and $y_n$ is the luminosity variation at time $t_n$. The value of the likelihood at this maximum is
+\begin{eqnarray}
+\hat L = \sum_{n=1}^N \frac{\left( y_n - (D\cdot \hat w)_n \right)^2}{\sigma^2}
+\label{eq:chisq}
+\end{eqnarray}
+where $\sigma$ is the standard deviation of each measurement, $y_n$. \red{SJM: this can't be the maximum likelihood, since it gets larger when one strays from $\hat w$. This is $\chi^2$, which is related to $\hat L$ in some other way, such as $\hat L = {\rm exp}[-\chi^2/2]$.}
+
+\subsection{Calculating the uncertainties}
+
+For a given parameter $\theta$ in the model, whose optimum value is $\hat \theta$, the log-likelihood is expressed as
+\begin{eqnarray}
+\log L = -\frac{1}{2}\frac{(\theta - \hat \theta)^2}{\sigma_{\theta}^2},
+\end{eqnarray}
+so the uncertainty $\sigma_{\theta}^2$ can be found by taking the second derivative of the log-likelihood
+\begin{eqnarray}
+\frac{d \log L}{d\theta} &=& -\frac{(\theta - \hat \theta)}{\sigma_{\theta}^2}\\
+\frac{d^2 \log L}{d\theta^2} &=& -\frac{1}{\sigma_{\theta}^2}\\
+\sigma_{\theta}^2 &=& -\frac{1}{\frac{d^2 \log L}{d\theta^2}}.
+\label{eq:sigma}
+\end{eqnarray}
+The arbitrary number of model parameters $M$ are collected together in the Hessian, $H$,
+\begin{eqnarray}
+H = \left( \begin{array}{cccc}
+	\sigma_{\theta_1}\sigma_{\theta_1}&~\sigma_{\theta_1}\sigma_{\theta_2}&~\dots&~\sigma_{\theta_1}\sigma_{\theta_M} \\
+	\sigma_{\theta_2}\sigma_{\theta_1}&~\sigma_{\theta_2}\sigma_{\theta_2}&~\dots&~\sigma_{\theta_2}\sigma_{\theta_M} \\
+	\vdots&~\vdots&~\vdots&~\vdots\\
+	\sigma_{\theta_M}\sigma_{\theta_1}&~\sigma_{\theta_M}\sigma_{\theta_2}&~\dots&~\sigma_{\theta_M}\sigma_{\theta_M} \\
+	\end{array}\right)
+\label{eq:hessian}
+\end{eqnarray}
+which is a square matrix with $M$ rows and columns. \red{In addition to this, we define this beast called $\Sigma_{\theta}$, which is the negative inverse of the Hessian,}
+\begin{eqnarray}
+\Sigma_{\theta} = -(H)^{-1}.
+\end{eqnarray}
+
+\section{To do:}
+
+We only produce keplerian orbits.\\
+Could have spline fitted to individual $\tau(t_n)$ measurements.\\
+Note integration time is assumed to be zero.\\
+Adding in RV data (be careful -- use same parametrization).\\
+
+\subsection{Examples}
+
+Short period binaries:
+\begin{enumerate}
+\item KIC\,10080843 -- 15-d PB2.
+\item KIC\,6780873 -- 9.15-d PB1.
+\item Simulated TESS subdwarfs, possibly super-Nyquist of 2-min cadence.
+\end{enumerate}
+Other examples we might consider:
+\begin{enumerate}
+\item \textit{Kepler} $\delta$\,Sct using the Nyquist aliases.
+\end{enumerate}
+
+%\begin{figure}
+%\begin{center}
+%\includegraphics[width=0.48\textwidth]{example.eps}
+%\caption{Example of a caption.}
+%\label{fig:example}
+%\end{center}
+%\end{figure}
+%
+%\begin{table}
+%\centering
+%\caption{I'm a table caption.}
+%\label{tab:example}
+%\begin{tabular}{rl}
+%\toprule
+%Note & Reference\\
+% & km\,s$^{-1}$\\
+%\midrule
+%Some & Content\\
+%\bottomrule
+%\end{tabular}
+%\end{table}
+
+\section*{Acknowledgements}
+
+This research was supported by the Simons Foundation and the Australian Research Council.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%% REFERENCES %%%%%%%%%%%%%%%%%
+
+\bibliographystyle{mnras}
+\bibliography{sjm_bibliography} % name of .bib file, without extension
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% endmatter
+
+\bsp	% typesetting comment
+\label{lastpage}
+\end{document}
