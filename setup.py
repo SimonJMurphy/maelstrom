@@ -20,8 +20,7 @@ extensions = [
     Extension(
         "maelstrom.interp.interp_op",
         sources=[
-            "maelstrom/interp/interp_op.cc",
-            "maelstrom/interp/interp_grad_op.cc",
+            "maelstrom/interp/searchsorted_op.cc",
         ],
         language="c++",
         include_dirs=include_dirs,
