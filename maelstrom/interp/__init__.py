@@ -15,13 +15,13 @@ interp = mod.interp
 def _interp_grad(op, *grads):
     t, x, y = op.inputs
     bf = grads[0]
-    by = mod.interp_grad(t, x, bf)
-    return [None, None, by]
+    bt, by = mod.interp_grad(t, x, y, bf)
+    return [bt, None, by]
 
 
-@tf.RegisterGradient("InterpGrad")
-def _interp_grad_grad(op, *grads):
-    t, x, bf = op.inputs
-    bby = grads[0]
-    bbf = mod.interp(t, x, bby)
-    return [None, None, bbf]
+# @tf.RegisterGradient("InterpGrad")
+# def _interp_grad_grad(op, *grads):
+#     t, x, bf = op.inputs
+#     bbt, bby = grads
+#     bbf = mod.interp(t, x, bby)
+#     return [None, None, None, bbf]
