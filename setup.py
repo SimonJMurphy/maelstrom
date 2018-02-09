@@ -10,8 +10,8 @@ include_dirs.append(os.path.join(
     include_dirs[1], "external/nsync/public"))
 
 extensions = [Extension(
-    "kepler.kepler_op",
-    sources=["kepler/kepler_op.cc"],
+    "maelstrom.kepler.kepler_op",
+    sources=["maelstrom/kepler/kepler_op.cc"],
     language="c++",
     include_dirs=include_dirs,
     extra_compile_args=["-std=c++11", "-stdlib=libc++"],
@@ -20,7 +20,7 @@ extensions = [Extension(
 setup(
     name="jokerflow",
     license="MIT",
-    packages=["kepler"],
+    packages=["maelstrom", "maelstrom.kepler"],
     ext_modules=extensions,
     zip_safe=True,
 )
