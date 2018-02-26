@@ -29,7 +29,7 @@ extensions = [
 ]
 
 setup(
-    name="jokerflow",
+    name="maelstrom",
     license="MIT",
     packages=["maelstrom", "maelstrom.kepler", "maelstrom.interp"],
     ext_modules=extensions,
