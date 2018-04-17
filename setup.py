@@ -36,6 +36,8 @@ setup(
     name="maelstrom",
     license="MIT",
     packages=["maelstrom", "maelstrom.kepler", "maelstrom.interp"],
+    url = 'https://github.com/SimonJMurphy/maelstrom',
+    install_requires=['numpy>=1.10','astropy>=1.0','tensorflow'],
     ext_modules=extensions,
     zip_safe=True,
 )
